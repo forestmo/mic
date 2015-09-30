@@ -186,6 +186,8 @@ rdma_node_get_transport(enum rdma_node_type node_type)
 		return RDMA_TRANSPORT_USNIC;
 	case RDMA_NODE_USNIC_UDP:
 		return RDMA_TRANSPORT_USNIC_UDP;
+	case RDMA_NODE_MIC:
+		return RDMA_TRANSPORT_SCIF;
 	default:
 		BUG();
 		return 0;
@@ -205,6 +207,8 @@ enum rdma_link_layer rdma_port_get_link_layer(struct ib_device *device, u8 port_
 	case RDMA_TRANSPORT_USNIC:
 	case RDMA_TRANSPORT_USNIC_UDP:
 		return IB_LINK_LAYER_ETHERNET;
+	case RDMA_TRANSPORT_SCIF:
+		return IB_LINK_LAYER_SCIF;
 	default:
 		return IB_LINK_LAYER_UNSPECIFIED;
 	}

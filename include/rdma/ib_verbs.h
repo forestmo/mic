@@ -79,20 +79,23 @@ enum rdma_node_type {
 	RDMA_NODE_RNIC,
 	RDMA_NODE_USNIC,
 	RDMA_NODE_USNIC_UDP,
+	RDMA_NODE_MIC,
 };
 
 enum rdma_transport_type {
 	RDMA_TRANSPORT_IB,
 	RDMA_TRANSPORT_IWARP,
 	RDMA_TRANSPORT_USNIC,
-	RDMA_TRANSPORT_USNIC_UDP
+	RDMA_TRANSPORT_USNIC_UDP,
+	RDMA_TRANSPORT_SCIF,
 };
 
 enum rdma_protocol_type {
 	RDMA_PROTOCOL_IB,
 	RDMA_PROTOCOL_IBOE,
 	RDMA_PROTOCOL_IWARP,
-	RDMA_PROTOCOL_USNIC_UDP
+	RDMA_PROTOCOL_USNIC_UDP,
+	RDMA_PROTOCOL_SCIF,
 };
 
 __attribute_const__ enum rdma_transport_type
@@ -102,6 +105,7 @@ enum rdma_link_layer {
 	IB_LINK_LAYER_UNSPECIFIED,
 	IB_LINK_LAYER_INFINIBAND,
 	IB_LINK_LAYER_ETHERNET,
+	IB_LINK_LAYER_SCIF,
 };
 
 enum ib_device_cap_flags {
@@ -391,6 +395,7 @@ union rdma_protocol_stats {
 #define RDMA_CORE_CAP_PROT_IB           0x00100000
 #define RDMA_CORE_CAP_PROT_ROCE         0x00200000
 #define RDMA_CORE_CAP_PROT_IWARP        0x00400000
+#define RDMA_CORE_CAP_PROT_SCIF         0x00800000
 
 #define RDMA_CORE_PORT_IBA_IB          (RDMA_CORE_CAP_PROT_IB  \
 					| RDMA_CORE_CAP_IB_MAD \
@@ -407,6 +412,8 @@ union rdma_protocol_stats {
 					| RDMA_CORE_CAP_IW_CM)
 #define RDMA_CORE_PORT_INTEL_OPA       (RDMA_CORE_PORT_IBA_IB  \
 					| RDMA_CORE_CAP_OPA_MAD)
+#define RDMA_CORE_PORT_SCIF            (RDMA_CORE_PORT_SCIF  \
+					| RDMA_CORE_CAP_IW_CM)
 
 struct ib_port_attr {
 	enum ib_port_state	state;
@@ -1945,6 +1952,11 @@ static inline bool rdma_protocol_roce(const struct ib_device *device, u8 port_nu
 static inline bool rdma_protocol_iwarp(const struct ib_device *device, u8 port_num)
 {
 	return device->port_immutable[port_num].core_cap_flags & RDMA_CORE_CAP_PROT_IWARP;
+}
+
+static inline bool rdma_protocol_scif(const struct ib_device *device, u8 port_num)
+{
+	return device->port_immutable[port_num].core_cap_flags & RDMA_CORE_CAP_PROT_SCIF;
 }
 
 static inline bool rdma_ib_or_roce(const struct ib_device *device, u8 port_num)

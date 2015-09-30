@@ -253,6 +253,8 @@ static ssize_t link_layer_show(struct ib_port *p, struct port_attribute *unused,
 		return sprintf(buf, "%s\n", "InfiniBand");
 	case IB_LINK_LAYER_ETHERNET:
 		return sprintf(buf, "%s\n", "Ethernet");
+	case IB_LINK_LAYER_SCIF:
+		return sprintf(buf, "%s\n", "SCIF");
 	default:
 		return sprintf(buf, "%s\n", "Unknown");
 	}
@@ -606,6 +608,7 @@ static ssize_t show_node_type(struct device *device,
 	case RDMA_NODE_USNIC_UDP: return sprintf(buf, "%d: usNIC UDP\n", dev->node_type);
 	case RDMA_NODE_IB_SWITCH: return sprintf(buf, "%d: switch\n", dev->node_type);
 	case RDMA_NODE_IB_ROUTER: return sprintf(buf, "%d: router\n", dev->node_type);
+	case RDMA_NODE_MIC:	  return sprintf(buf, "%d: MIC\n", dev->node_type);
 	default:		  return sprintf(buf, "%d: <unknown>\n", dev->node_type);
 	}
 }
