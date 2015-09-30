@@ -2317,6 +2317,23 @@ err1:
 	return ret;
 }
 
+static int cma_resolve_scif_route(struct rdma_id_private *id_priv)
+{
+	struct cma_work *work;
+
+	work = kzalloc(sizeof *work, GFP_KERNEL);
+	if (!work)
+		return -ENOMEM;
+
+	work->id = id_priv;
+	INIT_WORK(&work->work, cma_work_handler);
+	work->old_state = RDMA_CM_ROUTE_QUERY;
+	work->new_state = RDMA_CM_ROUTE_RESOLVED;
+	work->event.event = RDMA_CM_EVENT_ROUTE_RESOLVED;
+	queue_work(cma_wq, &work->work);
+	return 0;
+}
+
 int rdma_resolve_route(struct rdma_cm_id *id, int timeout_ms)
 {
 	struct rdma_id_private *id_priv;
@@ -2333,6 +2350,8 @@ int rdma_resolve_route(struct rdma_cm_id *id, int timeout_ms)
 		ret = cma_resolve_iboe_route(id_priv);
 	else if (rdma_protocol_iwarp(id->device, id->port_num))
 		ret = cma_resolve_iw_route(id_priv, timeout_ms);
+	else if (rdma_protocol_scif(id->device, id->port_num))
+		ret = cma_resolve_scif_route(id_priv);
 	else
 		ret = -ENOSYS;
 
@@ -2540,6 +2559,23 @@ static int cma_bind_addr(struct rdma_cm_id *id, struct sockaddr *src_addr,
 	return rdma_bind_addr(id, src_addr);
 }
 
+static int cma_resolve_scif_addr(struct rdma_id_private *id_priv)
+{
+	struct cma_work *work;
+
+	work = kzalloc(sizeof *work, GFP_KERNEL);
+	if (!work)
+		return -ENOMEM;
+
+	work->id = id_priv;
+	INIT_WORK(&work->work, cma_work_handler);
+	work->old_state = RDMA_CM_ADDR_QUERY;
+	work->new_state = RDMA_CM_ADDR_RESOLVED;
+	work->event.event = RDMA_CM_EVENT_ADDR_RESOLVED;
+	queue_work(cma_wq, &work->work);
+	return 0;
+}
+
 int rdma_resolve_addr(struct rdma_cm_id *id, struct sockaddr *src_addr,
 		      struct sockaddr *dst_addr, int timeout_ms)
 {
@@ -2566,6 +2602,8 @@ int rdma_resolve_addr(struct rdma_cm_id *id, struct sockaddr *src_addr,
 	} else {
 		if (dst_addr->sa_family == AF_IB) {
 			ret = cma_resolve_ib_addr(id_priv);
+		} else if (id->device && rdma_protocol_scif(id->device, id->port_num)) {
+			ret = cma_resolve_scif_addr(id_priv);
 		} else {
 			ret = rdma_resolve_ip(&addr_client, cma_src_addr(id_priv),
 					      dst_addr, &id->route.addr.dev_addr,
