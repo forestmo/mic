@@ -1,0 +1,4 @@
+config INFINIBAND_SCIF
+	tristate "SCIF RDMA driver support"
+	---help---
+	  RDMA over SCIF driver.
