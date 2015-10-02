@@ -106,6 +106,8 @@
 extern int window_size;
 #define MIN_WINDOW_SIZE	4	/* Ack every window_size/MIN_WINDOW_SIZE packets */
 
+/* Module parameters */
+extern int max_pinned;
 extern int rma_threshold;
 extern int fast_rdma;
 extern int blocking_send;

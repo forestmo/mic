@@ -757,7 +757,7 @@ int ibscif_modify_qp(struct ib_qp *ibqp, struct ib_qp_attr *attr,
 		/* Validation successful; resize the QP as needed. */
 		err = ibscif_resize_qp(qp, sq_size, rq_size,
 				       max_ir +
-					   (rma_threshold == 0x7FFFFFFFF ?
+					   (rma_threshold == 0x7FFFFFFFFL ?
 						0 : sq_size));
 		if (err)
 			goto out;

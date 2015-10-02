@@ -31,7 +31,7 @@
 #include "ibscif_driver.h"
 
 static LIST_HEAD(listen_list);
-DEFINE_SPINLOCK(listen_list_lock);
+static DEFINE_SPINLOCK(listen_list_lock);
 
 static int sockaddr_in_to_node_id(struct sockaddr_in addr)
 {

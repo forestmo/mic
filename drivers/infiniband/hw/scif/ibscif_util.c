@@ -36,7 +36,7 @@
 #define IBSCIF_CONN_ESTABLISHED 3
 #define IBSCIF_CONN_ACTIVE 4
 
-DEFINE_SPINLOCK(conn_state_lock);
+static DEFINE_SPINLOCK(conn_state_lock);
 static int conn_state[IBSCIF_MAX_DEVICES][IBSCIF_MAX_DEVICES];
 
 #define IBSCIF_CONN_REP 1
