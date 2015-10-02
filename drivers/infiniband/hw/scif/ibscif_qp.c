@@ -358,7 +358,8 @@ static int ibscif_flush_wq(struct ibscif_wq *wq, struct ibscif_cq *cq)
 		wc->ibwc.wr_id	  = wr->id;
 		wc->ibwc.opcode	  = is_rq(wq) ?
 					IB_WC_RECV :
-					to_ib_wc_opcode(wr->opcode);
+					to_ib_wc_opcode(
+						(enum ib_wr_opcode)wr->opcode);
 		wc->ibwc.status	  = IB_WC_WR_FLUSH_ERR;
 		wc->ibwc.ex.imm_data = 0;
 		wc->ibwc.byte_len = 0;

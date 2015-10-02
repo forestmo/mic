@@ -110,7 +110,7 @@ int ibscif_post_send(struct ib_qp *ibqp, struct ib_send_wr *ibwr,
 		memset(&wr->sar, 0, sizeof wr->sar);
 
 		wr->id	   = ibwr->wr_id;
-		wr->opcode = ibwr->opcode;
+		wr->opcode = (enum ibscif_wr_opcode) ibwr->opcode;
 		wr->flags  = ibwr->send_flags |
 			     ((qp->sq_policy == IB_SIGNAL_ALL_WR) ?
 					IB_SEND_SIGNALED : 0);

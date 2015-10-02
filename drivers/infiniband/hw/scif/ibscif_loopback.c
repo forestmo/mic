@@ -211,7 +211,8 @@ static int ibscif_complete_sq_wr(struct ibscif_wq *sq,
 		wc->ibwc.qp	  = &qp->ibqp;
 		wc->ibwc.src_qp	  = qp->remote_qpn;
 		wc->ibwc.wr_id	  = send_wr->id;
-		wc->ibwc.opcode	  = to_ib_wc_opcode(send_wr->opcode);
+		wc->ibwc.opcode	  = to_ib_wc_opcode(
+					(enum ib_wr_opcode)send_wr->opcode);
 		wc->ibwc.status	  = status;
 		wc->ibwc.ex.imm_data = 0;
 		wc->ibwc.port_num = 1;

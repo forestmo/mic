@@ -1393,7 +1393,8 @@ int ibscif_process_sq_completions(struct ibscif_qp *qp)
 		wc->ibwc.qp	  = &qp->ibqp;
 		wc->ibwc.src_qp	  = qp->remote_qpn;
 		wc->ibwc.wr_id	  = wr->id;
-		wc->ibwc.opcode	  = to_ib_wc_opcode(wr->opcode);
+		wc->ibwc.opcode	  = to_ib_wc_opcode(
+					(enum ib_wr_opcode)wr->opcode);
 		wc->ibwc.wc_flags = (((enum ib_wr_opcode)wr->opcode ==
 					IB_WR_RDMA_WRITE_WITH_IMM) ||
 				     ((enum ib_wr_opcode)wr->opcode ==
