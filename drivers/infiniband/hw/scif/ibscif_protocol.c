@@ -2781,8 +2781,8 @@ done_no_qp:
 	return 0;
 }
 
-void ibscif_do_recv(struct ibscif_dev *dev, scif_epd_t ep,
-		    struct ibscif_conn *conn)
+static void ibscif_do_recv(struct ibscif_dev *dev, scif_epd_t ep,
+			   struct ibscif_conn *conn)
 {
 	struct sk_buff *skb;
 	union ibscif_pdu *pdu;
@@ -2895,7 +2895,7 @@ void ibscif_refresh_pollep_list(void)
 	atomic_set(&poll_eps_changed, 1);
 }
 
-int ibscif_poll_thread(void *unused_arg)
+static int ibscif_poll_thread(void *unused_arg)
 {
 	int poll_count = 0;
 	int ret;
