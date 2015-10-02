@@ -295,7 +295,8 @@ struct cm_hdr {
 	__be64			req_ctx;
 	__be64			rep_ctx;
 	__be32			cmd;
-	__be32			port;
+	__be16			port;
+	__be16			padding;
 	__be32			qpn;
 	__be32			status;
 	__be32			plen;

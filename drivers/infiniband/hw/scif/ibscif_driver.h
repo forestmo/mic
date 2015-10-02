@@ -186,7 +186,7 @@ struct ibscif_listen {
 	struct iw_cm_id		*cm_id;
 	struct list_head	entry;
 	struct kref		kref;
-	int			port;
+	__be16			port;
 };
 
 #define IBSCIF_MAX_PDATA_SIZE	256

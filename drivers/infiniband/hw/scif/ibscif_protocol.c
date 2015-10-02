@@ -1265,7 +1265,7 @@ int ibscif_send_cm_req(struct ibscif_cm *cm_ctx)
 	pdu = (struct ibscif_full_frame *)skb->data;
 	pdu->ibscif.cm.req_ctx	= __cpu_to_be64((u64)(uintptr_t)cm_ctx);
 	pdu->ibscif.cm.cmd = __cpu_to_be32(IBSCIF_CM_REQ);
-	pdu->ibscif.cm.port = __cpu_to_be32((u32)cm_ctx->remote_addr.sin_port);
+	pdu->ibscif.cm.port = cm_ctx->remote_addr.sin_port;
 	pdu->ibscif.cm.qpn = __cpu_to_be32(cm_ctx->qpn);
 	pdu->ibscif.cm.plen = __cpu_to_be32(cm_ctx->plen);
 	memcpy(pdu->ibscif.cm.pdata, cm_ctx->pdata, cm_ctx->plen);

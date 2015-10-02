@@ -430,13 +430,14 @@ int ibscif_process_cm_skb(struct sk_buff *skb, struct ibscif_conn *conn)
 	union ibscif_pdu *pdu = (union ibscif_pdu *)skb->data;
 	struct ibscif_cm *cm_ctx;
 	struct ibscif_listen *listen;
-	int cmd, qpn, status, plen, err, port;
+	int cmd, qpn, status, plen, err;
+	__be16  port;
 	u64 req_ctx, rep_ctx;
 
 	req_ctx	= __be64_to_cpu(pdu->cm.req_ctx);
 	rep_ctx	= __be64_to_cpu(pdu->cm.rep_ctx);
 	cmd	= __be32_to_cpu(pdu->cm.cmd);
-	port	= __be32_to_cpu(pdu->cm.port);
+	port	= pdu->cm.port;
 	qpn	= __be32_to_cpu(pdu->cm.qpn);
 	status	= __be32_to_cpu(pdu->cm.status);
 	plen	= __be32_to_cpu(pdu->cm.plen);
