@@ -329,7 +329,7 @@ struct ibscif_wr {
 
 	union {
 		struct ibscif_send {
-			u32		immediate_data;
+			__be32		immediate_data;
 		} send;
 
 		struct ibscif_ud {
@@ -346,7 +346,7 @@ struct ibscif_wr {
 		struct ibscif_write {
 			u64		remote_address;
 			u32		rkey;
-			u32		immediate_data;
+			__be32		immediate_data;
 		} write;
 
 		struct ibscif_cmp_swp {

@@ -249,7 +249,7 @@ static int ibscif_create_hdr(struct ibscif_qp *qp, struct ibscif_wr *wr,
 			if (wr->opcode == WR_SEND_WITH_IMM) {
 				opcode = ibscif_pdu_set_immed(opcode);
 				pdu->ibscif.send.immed_data =
-					__cpu_to_be32(wr->send.immediate_data);
+					wr->send.immediate_data;
 			} else pdu->ibscif.send.immed_data = 0;
 			if (wr->flags & IB_SEND_SOLICITED)
 				opcode = ibscif_pdu_set_se(opcode);
@@ -303,7 +303,7 @@ static int ibscif_create_hdr(struct ibscif_qp *qp, struct ibscif_wr *wr,
 		if ((enum ib_wr_opcode)wr->opcode == IB_WR_RDMA_WRITE_WITH_IMM){
 			opcode = ibscif_pdu_set_immed(opcode);
 			pdu->ibscif.write.immed_data =
-				__cpu_to_be32(wr->write.immediate_data);
+				wr->write.immediate_data;
 			if (wr->flags & IB_SEND_SOLICITED)
 				opcode = ibscif_pdu_set_se(opcode);
 		} else pdu->ibscif.write.immed_data = 0;
@@ -1921,8 +1921,7 @@ static int ibscif_process_send(struct ibscif_qp *qp, union ibscif_pdu *pdu,
 		wr->state = WR_LAST_SEEN;
 		wr->sar.rea.opcode = pdu->hdr.opcode;
 		wr->sar.rea.last_packet_seq = pdu->hdr.seq_num;
-		wr->sar.rea.immediate_data =
-			__be32_to_cpu(pdu->send.immed_data);
+		wr->sar.rea.immediate_data = pdu->send.immed_data;
 		wr->sar.rea.final_length = pdu->send.msg_length;
 	}
 
@@ -1990,8 +1989,7 @@ static int ibscif_process_write(struct ibscif_qp *qp, union ibscif_pdu *pdu,
 			wr->state = WR_LAST_SEEN;
 			wr->sar.rea.opcode = pdu->hdr.opcode;
 			wr->sar.rea.last_packet_seq = pdu->hdr.seq_num;
-			wr->sar.rea.immediate_data =
-				__be32_to_cpu(pdu->write.immed_data);
+			wr->sar.rea.immediate_data = pdu->write.immed_data;
 		}
 	}
 
@@ -2348,7 +2346,7 @@ static int ibscif_process_send_rma(struct ibscif_qp *qp,
 	wr->state = WR_LAST_SEEN;
 	wr->sar.rea.opcode = pdu->hdr.opcode;
 	wr->sar.rea.last_packet_seq = pdu->hdr.seq_num;
-	wr->sar.rea.immediate_data = __be32_to_cpu(pdu->send.immed_data);
+	wr->sar.rea.immediate_data = pdu->send.immed_data;
 	wr->sar.rea.final_length = pdu->send.msg_length;
 
 	/* Respond to the initiator with the result */
@@ -2472,8 +2470,7 @@ static int ibscif_process_write_rma(struct ibscif_qp *qp,
 		wr->state = WR_LAST_SEEN;
 		wr->sar.rea.opcode = pdu->hdr.opcode;
 		wr->sar.rea.last_packet_seq = pdu->hdr.seq_num;
-		wr->sar.rea.immediate_data =
-			__be32_to_cpu(pdu->write.immed_data);
+		wr->sar.rea.immediate_data = pdu->write.immed_data;
 	}
 
 	/* Respond to the initiator with the result */

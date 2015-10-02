@@ -269,14 +269,12 @@ static int ibscif_complete_rq_wr(struct ibscif_wq *rq,
 	case IB_WR_SEND_WITH_IMM:
 		DEV_STAT(qp->dev, recv_imm++);
 		wc->ibwc.opcode	  = IB_WC_RECV_RDMA_WITH_IMM;
-		wc->ibwc.ex.imm_data =
-			cpu_to_be32(send_wr->send.immediate_data);
+		wc->ibwc.ex.imm_data = send_wr->send.immediate_data;
 		break;
 	case IB_WR_RDMA_WRITE_WITH_IMM:
 		DEV_STAT(qp->dev, recv_imm++);
 		wc->ibwc.opcode	  = IB_WC_RECV_RDMA_WITH_IMM;
-		wc->ibwc.ex.imm_data =
-			cpu_to_be32(send_wr->write.immediate_data);
+		wc->ibwc.ex.imm_data = send_wr->write.immediate_data;
 		break;
 	default:
 		DEV_STAT(qp->dev, recv++);
