@@ -74,7 +74,7 @@ static struct sk_buff *ibscif_alloc_tx_skb(struct ibscif_dev *dev,
 	skb_reset_mac_header(skb);
 	skb_reset_network_header(skb);
 
-	skb->protocol  = IBSCIF_PACKET_TYPE;
+	skb->protocol  = __cpu_to_be16(IBSCIF_PACKET_TYPE);
 	skb->ip_summed = CHECKSUM_UNNECESSARY;
 	skb->priority  = TC_PRIO_CONTROL; /* highest defined priority */
 	skb->dev       = (void *) dev;
@@ -152,7 +152,7 @@ next:
 		if (qp && qp->ibqp.qp_type == IB_QPT_UD) {
 			struct ibscif_full_frame *pdu =
 				(struct ibscif_full_frame*)skb->data;
-			u16 opcode = __be16_to_cpu(pdu->ibscif.hdr.opcode);
+			u16 opcode = pdu->ibscif.hdr.opcode;
 			if (ibscif_pdu_is_last(opcode)) {
 				struct ibscif_wr *wr = GET_SKB_WR(skb);
 				ibscif_clear_ds_refs(wr->ds_list, wr->num_ds);
@@ -210,17 +210,17 @@ static int ibscif_create_hdr(struct ibscif_qp *qp, struct ibscif_wr *wr,
 	qp->wire.sq.rx.last_seq_acked = sq_seq;
 	qp->wire.iq.rx.last_seq_acked = iq_seq;
 
-	pdu->ibscif.hdr.length	 = __cpu_to_be16(skb->data_len);
+	pdu->ibscif.hdr.length	 = skb->data_len;
 	if (qp->ibqp.qp_type == IB_QPT_UD) {
-		pdu->ibscif.hdr.dst_qp	 = __cpu_to_be32(wr->ud.remote_qpn);
+		pdu->ibscif.hdr.dst_qp	 = wr->ud.remote_qpn;
 	}
 	else {
-		pdu->ibscif.hdr.dst_qp	 = __cpu_to_be32(qp->remote_qpn);
+		pdu->ibscif.hdr.dst_qp	 = qp->remote_qpn;
 	}
-	pdu->ibscif.hdr.src_qp	 = __cpu_to_be32(qp->ibqp.qp_num);
-	pdu->ibscif.hdr.seq_num	 = __cpu_to_be32(seq_num);
-	pdu->ibscif.hdr.sq_ack_num = __cpu_to_be32(sq_seq);
-	pdu->ibscif.hdr.iq_ack_num = __cpu_to_be32(iq_seq);
+	pdu->ibscif.hdr.src_qp	 = qp->ibqp.qp_num;
+	pdu->ibscif.hdr.seq_num	 = seq_num;
+	pdu->ibscif.hdr.sq_ack_num = sq_seq;
+	pdu->ibscif.hdr.iq_ack_num = iq_seq;
 
 	switch (wr->opcode) {
 	case WR_UD:
@@ -232,9 +232,8 @@ static int ibscif_create_hdr(struct ibscif_qp *qp, struct ibscif_wr *wr,
 			if (wr->flags & IB_SEND_SOLICITED)
 				opcode = ibscif_pdu_set_se(opcode);
 		}
-		pdu->ibscif.ud.msg_length = __cpu_to_be32(wr->length);
-		pdu->ibscif.ud.msg_offset = __cpu_to_be32(wr->length -
-							  wr_len_remaining);
+		pdu->ibscif.ud.msg_length = wr->length;
+		pdu->ibscif.ud.msg_offset = wr->length - wr_len_remaining;
 		memset(&pdu->ibscif.ud.grh, 0, 40);
 		break;
 
@@ -254,45 +253,39 @@ static int ibscif_create_hdr(struct ibscif_qp *qp, struct ibscif_wr *wr,
 			if (wr->flags & IB_SEND_SOLICITED)
 				opcode = ibscif_pdu_set_se(opcode);
 		}
-		pdu->ibscif.send.msg_id	= __cpu_to_be32(wr->msg_id);
-		pdu->ibscif.send.msg_length = __cpu_to_be32(wr->length);
-		pdu->ibscif.send.msg_offset = __cpu_to_be32(wr->length -
-						wr_len_remaining);
+		pdu->ibscif.send.msg_id	= wr->msg_id;
+		pdu->ibscif.send.msg_length = wr->length;
+		pdu->ibscif.send.msg_offset = wr->length - wr_len_remaining;
 		if (wr->use_rma) {
 			opcode = ibscif_op_send_rma;
-			pdu->ibscif.send.rma_id = __cpu_to_be32(wr->rma_id);
-			pdu->ibscif.send.num_rma_addrs =
-				__cpu_to_be32(wr->num_ds);
+			pdu->ibscif.send.rma_id = wr->rma_id;
+			pdu->ibscif.send.num_rma_addrs = wr->num_ds;
 			for (i=0; i<wr->num_ds; i++) {
 				offset = wr->ds_list[i].current_mreg->offset +
 					 wr->ds_list[i].offset;
-				pdu->ibscif.send.rma_addrs[i].offset =
-					__cpu_to_be64(offset);
+				pdu->ibscif.send.rma_addrs[i].offset = offset;
 				pdu->ibscif.send.rma_addrs[i].length =
-					__cpu_to_be32(wr->ds_list[i].length);
+					wr->ds_list[i].length;
 			}
 		}
 		break;
 
 	case WR_RDMA_READ:
 		opcode = ibscif_op_read;
-		pdu->ibscif.read_req.rdma_id = __cpu_to_be32(wr->msg_id);
-		pdu->ibscif.read_req.rdma_key = __cpu_to_be32(wr->read.rkey);
-		pdu->ibscif.read_req.rdma_length =
-			__cpu_to_be32(wr->read.remote_length);
-		pdu->ibscif.read_req.rdma_address =
-			__cpu_to_be64(wr->read.remote_address);
+		pdu->ibscif.read_req.rdma_id = wr->msg_id;
+		pdu->ibscif.read_req.rdma_key = wr->read.rkey;
+		pdu->ibscif.read_req.rdma_length = wr->read.remote_length;
+		pdu->ibscif.read_req.rdma_address = wr->read.remote_address;
 		if (wr->use_rma) {
 			opcode = ibscif_op_read_rma;
-			pdu->ibscif.read_req.num_rma_addrs =
-				__cpu_to_be32(wr->num_ds);
+			pdu->ibscif.read_req.num_rma_addrs = wr->num_ds;
 			for (i=0; i<wr->num_ds; i++) {
 				offset = wr->ds_list[i].current_mreg->offset +
 					 wr->ds_list[i].offset;
 				pdu->ibscif.read_req.rma_addrs[i].offset =
-					__cpu_to_be64(offset);
+					offset;
 				pdu->ibscif.read_req.rma_addrs[i].length =
-					__cpu_to_be32(wr->ds_list[i].length);
+					wr->ds_list[i].length;
 			}
 		}
 		break;
@@ -313,77 +306,66 @@ static int ibscif_create_hdr(struct ibscif_qp *qp, struct ibscif_wr *wr,
 			if (wr->flags & IB_SEND_SIGNALED)
 				force = 1;
 		}
-		pdu->ibscif.write.msg_id = __cpu_to_be32(wr->msg_id);
-		pdu->ibscif.write.rdma_key = __cpu_to_be32(wr->write.rkey);
-		pdu->ibscif.write.rdma_address =
-			__cpu_to_be64(wr->write.remote_address +
-				      (wr->length - wr_len_remaining));
+		pdu->ibscif.write.msg_id = wr->msg_id;
+		pdu->ibscif.write.rdma_key = wr->write.rkey;
+		pdu->ibscif.write.rdma_address = wr->write.remote_address +
+						(wr->length - wr_len_remaining);
 		if (wr->use_rma) {
 			opcode = ibscif_op_write_rma;
 			if (wr->opcode == WR_RDMA_WRITE_WITH_IMM)
 				opcode = ibscif_pdu_set_immed(opcode);
-			pdu->ibscif.write.rma_id = __cpu_to_be32(wr->rma_id);
-			pdu->ibscif.write.rma_length
-				= __cpu_to_be32(wr->length);
-			pdu->ibscif.write.num_rma_addrs
-				= __cpu_to_be32(wr->num_ds);
+			pdu->ibscif.write.rma_id = wr->rma_id;
+			pdu->ibscif.write.rma_length = wr->length;
+			pdu->ibscif.write.num_rma_addrs = wr->num_ds;
 			for (i=0; i<wr->num_ds; i++) {
 				offset = wr->ds_list[i].current_mreg->offset +
 					 wr->ds_list[i].offset;
-				pdu->ibscif.write.rma_addrs[i].offset =
-					__cpu_to_be64(offset);
+				pdu->ibscif.write.rma_addrs[i].offset = offset;
 				pdu->ibscif.write.rma_addrs[i].length =
-					__cpu_to_be32(wr->ds_list[i].length);
+					wr->ds_list[i].length;
 			}
 		}
 		break;
 
 	case WR_ATOMIC_CMP_AND_SWP:
 		opcode = ibscif_pdu_set_last(ibscif_op_comp_swap);
-		pdu->ibscif.comp_swap.atomic_id = __cpu_to_be32(wr->msg_id);
-		pdu->ibscif.comp_swap.atomic_key =
-			__cpu_to_be32(wr->cmp_swp.rkey);
-		pdu->ibscif.comp_swap.comp_data =
-			__cpu_to_be64(wr->cmp_swp.cmp_operand);
-		pdu->ibscif.comp_swap.swap_data =
-			__cpu_to_be64(wr->cmp_swp.swp_operand);
+		pdu->ibscif.comp_swap.atomic_id = wr->msg_id;
+		pdu->ibscif.comp_swap.atomic_key = wr->cmp_swp.rkey;
+		pdu->ibscif.comp_swap.comp_data = wr->cmp_swp.cmp_operand;
+		pdu->ibscif.comp_swap.swap_data = wr->cmp_swp.swp_operand;
 		pdu->ibscif.comp_swap.atomic_address =
-			__cpu_to_be64(wr->cmp_swp.remote_address);
+			wr->cmp_swp.remote_address;
 		break;
 
 	case WR_ATOMIC_FETCH_AND_ADD:
 		opcode = ibscif_pdu_set_last(ibscif_op_fetch_add);
-		pdu->ibscif.fetch_add.atomic_id = __cpu_to_be32(wr->msg_id);
-		pdu->ibscif.fetch_add.atomic_key =
-			__cpu_to_be32(wr->fetch_add.rkey);
-		pdu->ibscif.fetch_add.add_data =
-			__cpu_to_be64(wr->fetch_add.add_operand);
+		pdu->ibscif.fetch_add.atomic_id = wr->msg_id;
+		pdu->ibscif.fetch_add.atomic_key = wr->fetch_add.rkey;
+		pdu->ibscif.fetch_add.add_data = wr->fetch_add.add_operand;
 		pdu->ibscif.fetch_add.atomic_address =
-			__cpu_to_be64(wr->fetch_add.remote_address);
+			wr->fetch_add.remote_address;
 		break;
 
 	case WR_RDMA_READ_RSP:
 		opcode = ibscif_op_read_rsp;
 		if (skb->data_len == wr_len_remaining)
 			opcode = ibscif_pdu_set_last(opcode);
-		pdu->ibscif.read_rsp.rdma_id = __cpu_to_be32(wr->msg_id);
-		pdu->ibscif.read_rsp.rdma_offset =
-			__cpu_to_be32(wr->length - wr_len_remaining);
+		pdu->ibscif.read_rsp.rdma_id = wr->msg_id;
+		pdu->ibscif.read_rsp.rdma_offset = wr->length -
+						   wr_len_remaining;
 		break;
 
 	case WR_ATOMIC_RSP:
 		opcode = ibscif_pdu_set_last(wr->atomic_rsp.opcode);
-		pdu->ibscif.atomic_rsp.atomic_id = __cpu_to_be32(wr->msg_id);
-		pdu->ibscif.atomic_rsp.orig_data =
-			__cpu_to_be64(wr->atomic_rsp.orig_data);
+		pdu->ibscif.atomic_rsp.atomic_id = wr->msg_id;
+		pdu->ibscif.atomic_rsp.orig_data = wr->atomic_rsp.orig_data;
 		break;
 
 	case WR_RMA_RSP:
 		opcode = ibscif_op_rma_rsp;
-		pdu->ibscif.rma_rsp.rma_id = __cpu_to_be32(wr->msg_id);
-		pdu->ibscif.rma_rsp.xfer_length	=
-			__cpu_to_be32(wr->rma_rsp.xfer_length);
-		pdu->ibscif.rma_rsp.error = __cpu_to_be32(wr->rma_rsp.error);
+		pdu->ibscif.rma_rsp.rma_id = wr->msg_id;
+		pdu->ibscif.rma_rsp.xfer_length	= wr->rma_rsp.xfer_length;
+		pdu->ibscif.rma_rsp.error = wr->rma_rsp.error;
 		break;
 	default:
 		printk(KERN_ERR PFX "%s() invalid opcode %d\n",
@@ -394,7 +376,7 @@ static int ibscif_create_hdr(struct ibscif_qp *qp, struct ibscif_wr *wr,
 	if (force)
 		opcode = ibscif_pdu_set_force_ack(opcode);
 
-	pdu->ibscif.hdr.opcode = __cpu_to_be16(opcode);
+	pdu->ibscif.hdr.opcode = opcode;
 
 	return 0;
 }
@@ -467,7 +449,7 @@ static struct sk_buff* ibscif_alloc_pdu(struct ibscif_dev *dev,
 	}
 
 	pdu = (struct ibscif_full_frame *)skb->data;
-	pdu->ibscif.hdr.hdr_size = __cpu_to_be16(hdr_size);
+	pdu->ibscif.hdr.hdr_size = hdr_size;
 
 	return skb;
 bail:
@@ -956,11 +938,9 @@ int ibscif_xmit_wr(struct ibscif_wq *wq, struct ibscif_wr *wr, int tx_limit,
 				(struct ibscif_full_frame*)skb->data;
 			skb->len = hdr_size + (max_payload - payload_left);
 			skb->data_len = (max_payload - payload_left);
-			pdu->ibscif.hdr.length = __cpu_to_be16(skb->data_len);
-			pdu->ibscif.hdr.opcode =
-				__cpu_to_be16(
-					__be16_to_cpu(pdu->ibscif.hdr.opcode) &
-					~ibscif_last_flag);
+			pdu->ibscif.hdr.length = skb->data_len;
+			pdu->ibscif.hdr.opcode = pdu->ibscif.hdr.opcode &
+						 ~ibscif_last_flag;
 		}
 
 		/* Send it. */
@@ -1007,14 +987,13 @@ ibscif_create_disconnect_hdr(struct ibscif_dev *dev, u32 src_qpn,
 	pdu = (struct ibscif_full_frame *)skb->data;
 
 	/* The eth_hdr and ack fields are set by the caller. */
-	pdu->ibscif.disconnect.hdr.opcode = __cpu_to_be16(ibscif_op_disconnect);
+	pdu->ibscif.disconnect.hdr.opcode = ibscif_op_disconnect;
 	pdu->ibscif.disconnect.hdr.length = 0; /* Length has no meaning. */
-	pdu->ibscif.disconnect.hdr.dst_qp = __cpu_to_be32(dst_qpn);
-	pdu->ibscif.disconnect.hdr.src_qp = __cpu_to_be32(src_qpn);
+	pdu->ibscif.disconnect.hdr.dst_qp = dst_qpn;
+	pdu->ibscif.disconnect.hdr.src_qp = src_qpn;
 	pdu->ibscif.disconnect.hdr.seq_num = 0; /* seq_num has no meaning. */
-	pdu->ibscif.disconnect.hdr.hdr_size =
-		__cpu_to_be16(sizeof(pdu->ibscif.disconnect));
-	pdu->ibscif.disconnect.reason	  = __cpu_to_be32(reason);
+	pdu->ibscif.disconnect.hdr.hdr_size = sizeof(pdu->ibscif.disconnect);
+	pdu->ibscif.disconnect.reason = reason;
 
 	SET_SKB_DEV(skb, dev);
 	SET_SKB_WR(skb, NULL);
@@ -1051,10 +1030,8 @@ void ibscif_send_disconnect(struct ibscif_qp *qp, enum ibscif_reason reason)
 
 	pdu = (struct ibscif_full_frame *)skb->data;
 
-	pdu->ibscif.disconnect.hdr.sq_ack_num =
-		__cpu_to_be32(qp->wire.sq.rx.last_in_seq);
-	pdu->ibscif.disconnect.hdr.iq_ack_num =
-		__cpu_to_be32(qp->wire.iq.rx.last_in_seq);
+	pdu->ibscif.disconnect.hdr.sq_ack_num = qp->wire.sq.rx.last_in_seq;
+	pdu->ibscif.disconnect.hdr.iq_ack_num = qp->wire.iq.rx.last_in_seq;
 
 	ibscif_dev_queue_xmit(skb);
 }
@@ -1128,12 +1105,12 @@ static struct sk_buff *ibscif_create_ack_hdr(struct ibscif_qp *qp, int size)
 
 	/* The opcode field set by the caller. */
 	pdu->ibscif.hdr.length = 0; /* Length has no meaning. */
-	pdu->ibscif.hdr.dst_qp = __cpu_to_be32(qp->remote_qpn);
-	pdu->ibscif.hdr.src_qp = __cpu_to_be32(qp->ibqp.qp_num);
+	pdu->ibscif.hdr.dst_qp = qp->remote_qpn;
+	pdu->ibscif.hdr.src_qp = qp->ibqp.qp_num;
 	pdu->ibscif.hdr.seq_num = 0; /* seq_num has no meaning. */
-	pdu->ibscif.hdr.sq_ack_num = __cpu_to_be32(sq_seq);
-	pdu->ibscif.hdr.iq_ack_num = __cpu_to_be32(iq_seq);
-	pdu->ibscif.hdr.hdr_size = __cpu_to_be16(size);
+	pdu->ibscif.hdr.sq_ack_num = sq_seq;
+	pdu->ibscif.hdr.iq_ack_num = iq_seq;
+	pdu->ibscif.hdr.hdr_size = size;
 
 	return skb;
 }
@@ -1148,7 +1125,7 @@ static void ibscif_send_ack(struct ibscif_qp *qp)
 		return;
 
 	pdu = (struct ibscif_full_frame *)skb->data;
-	pdu->ibscif.ack.hdr.opcode = __cpu_to_be16(ibscif_op_ack);
+	pdu->ibscif.ack.hdr.opcode = ibscif_op_ack;
 
 	ibscif_dev_queue_xmit(skb);
 }
@@ -1183,7 +1160,7 @@ ibscif_create_close_hdr(struct ibscif_conn *conn, int size)
 	pdu->ibscif.hdr.seq_num = 0; /* seq_num has no meaning. */
 	pdu->ibscif.hdr.sq_ack_num = 0; /* unused */
 	pdu->ibscif.hdr.iq_ack_num = 0; /* unused */
-	pdu->ibscif.hdr.hdr_size = __cpu_to_be16(size);
+	pdu->ibscif.hdr.hdr_size = size;
 
 	return skb;
 }
@@ -1198,7 +1175,7 @@ void ibscif_send_close(struct ibscif_conn *conn)
 		return;
 
 	pdu = (struct ibscif_full_frame *)skb->data;
-	pdu->ibscif.close.hdr.opcode = __cpu_to_be16(ibscif_op_close);
+	pdu->ibscif.close.hdr.opcode = ibscif_op_close;
 
 	ibscif_dev_queue_xmit(skb);
 }
@@ -1213,7 +1190,7 @@ void ibscif_send_reopen(struct ibscif_conn *conn)
 		return;
 
 	pdu = (struct ibscif_full_frame *)skb->data;
-	pdu->ibscif.close.hdr.opcode = __cpu_to_be16(ibscif_op_reopen);
+	pdu->ibscif.close.hdr.opcode = ibscif_op_reopen;
 
 	ibscif_dev_queue_xmit(skb);
 }
@@ -1240,14 +1217,14 @@ static struct sk_buff *ibscif_create_cm_hdr(struct ibscif_conn *conn, int size)
 
 	pdu = (struct ibscif_full_frame *)skb->data;
 
-	pdu->ibscif.hdr.opcode = __cpu_to_be16(ibscif_op_cm);
+	pdu->ibscif.hdr.opcode = ibscif_op_cm;
 	pdu->ibscif.hdr.length = 0; /* Length has no meaning. */
 	pdu->ibscif.hdr.dst_qp = 0; /* unused */
 	pdu->ibscif.hdr.src_qp = 0; /* unused */
 	pdu->ibscif.hdr.seq_num = 0; /* seq_num has no meaning. */
 	pdu->ibscif.hdr.sq_ack_num = 0; /* unused */
 	pdu->ibscif.hdr.iq_ack_num = 0; /* unused */
-	pdu->ibscif.hdr.hdr_size = __cpu_to_be16(size);
+	pdu->ibscif.hdr.hdr_size = size;
 
 	return skb;
 }
@@ -1263,11 +1240,11 @@ int ibscif_send_cm_req(struct ibscif_cm *cm_ctx)
 		return -ENOMEM;
 
 	pdu = (struct ibscif_full_frame *)skb->data;
-	pdu->ibscif.cm.req_ctx	= __cpu_to_be64((u64)(uintptr_t)cm_ctx);
-	pdu->ibscif.cm.cmd = __cpu_to_be32(IBSCIF_CM_REQ);
+	pdu->ibscif.cm.req_ctx	= (u64)(uintptr_t)cm_ctx;
+	pdu->ibscif.cm.cmd = IBSCIF_CM_REQ;
 	pdu->ibscif.cm.port = cm_ctx->remote_addr.sin_port;
-	pdu->ibscif.cm.qpn = __cpu_to_be32(cm_ctx->qpn);
-	pdu->ibscif.cm.plen = __cpu_to_be32(cm_ctx->plen);
+	pdu->ibscif.cm.qpn = cm_ctx->qpn;
+	pdu->ibscif.cm.plen = cm_ctx->plen;
 	memcpy(pdu->ibscif.cm.pdata, cm_ctx->pdata, cm_ctx->plen);
 
 	ibscif_dev_queue_xmit(skb);
@@ -1286,12 +1263,12 @@ int ibscif_send_cm_rep(struct ibscif_cm *cm_ctx)
 		return -ENOMEM;
 
 	pdu = (struct ibscif_full_frame *)skb->data;
-	pdu->ibscif.cm.req_ctx = __cpu_to_be64(cm_ctx->peer_context);
-	pdu->ibscif.cm.rep_ctx = __cpu_to_be64((__u64)cm_ctx);
-	pdu->ibscif.cm.cmd = __cpu_to_be32(IBSCIF_CM_REP);
-	pdu->ibscif.cm.qpn = __cpu_to_be32(cm_ctx->qpn);
-	pdu->ibscif.cm.status = __cpu_to_be32(0);
-	pdu->ibscif.cm.plen = __cpu_to_be32(cm_ctx->plen);
+	pdu->ibscif.cm.req_ctx = cm_ctx->peer_context;
+	pdu->ibscif.cm.rep_ctx = (u64)cm_ctx;
+	pdu->ibscif.cm.cmd = IBSCIF_CM_REP;
+	pdu->ibscif.cm.qpn = cm_ctx->qpn;
+	pdu->ibscif.cm.status = 0;
+	pdu->ibscif.cm.plen = cm_ctx->plen;
 	memcpy(pdu->ibscif.cm.pdata, cm_ctx->pdata, cm_ctx->plen);
 
 	ibscif_dev_queue_xmit(skb);
@@ -1309,10 +1286,10 @@ int ibscif_send_cm_rej(struct ibscif_cm *cm_ctx, const void *pdata, u8 plen)
 		return -ENOMEM;
 
 	pdu = (struct ibscif_full_frame *)skb->data;
-	pdu->ibscif.cm.req_ctx = __cpu_to_be64(cm_ctx->peer_context);
-	pdu->ibscif.cm.cmd = __cpu_to_be32(IBSCIF_CM_REJ);
-	pdu->ibscif.cm.status = __cpu_to_be32(-ECONNREFUSED);
-	pdu->ibscif.cm.plen = __cpu_to_be32((u32)plen);
+	pdu->ibscif.cm.req_ctx = cm_ctx->peer_context;
+	pdu->ibscif.cm.cmd = IBSCIF_CM_REJ;
+	pdu->ibscif.cm.status = -ECONNREFUSED;
+	pdu->ibscif.cm.plen = (u32)plen;
 	memcpy(pdu->ibscif.cm.pdata, pdata, plen);
 
 	ibscif_dev_queue_xmit(skb);
@@ -1330,8 +1307,8 @@ int ibscif_send_cm_rtu(struct ibscif_cm *cm_ctx)
 		return -ENOMEM;
 
 	pdu = (struct ibscif_full_frame *)skb->data;
-	pdu->ibscif.cm.rep_ctx = __cpu_to_be64(cm_ctx->peer_context);
-	pdu->ibscif.cm.cmd = __cpu_to_be32(IBSCIF_CM_RTU);
+	pdu->ibscif.cm.rep_ctx = cm_ctx->peer_context;
+	pdu->ibscif.cm.cmd = IBSCIF_CM_RTU;
 
 	ibscif_dev_queue_xmit(skb);
 
@@ -1822,9 +1799,6 @@ static int ibscif_process_ud(struct ibscif_qp *qp, union ibscif_pdu *pdu,
 		return -EINVAL;
 	}
 
-	pdu->ud.msg_length = __be32_to_cpu(pdu->ud.msg_length);
-	pdu->ud.msg_offset = __be32_to_cpu(pdu->ud.msg_offset);
-
 	/* Only one pdu is allowed for one UD packet, otherwise drop the pdu */
 	if (unlikely(pdu->ud.msg_length != pdu->hdr.length ||
 		     pdu->ud.msg_offset)) {
@@ -1878,7 +1852,6 @@ static int ibscif_process_send(struct ibscif_qp *qp, union ibscif_pdu *pdu,
 	struct ibscif_wr *wr;
 	int err;
 
-	pdu->send.msg_id = __be32_to_cpu(pdu->send.msg_id);
 	spin_lock_bh(&qp->rq.lock);
 	if (unlikely(pdu->send.msg_id >= qp->rq.next_msg_id)) {
 		spin_unlock_bh(&qp->rq.lock);
@@ -1894,11 +1867,9 @@ static int ibscif_process_send(struct ibscif_qp *qp, union ibscif_pdu *pdu,
 	if (unlikely(!wr))
 		return -EBADR;
 
-	pdu->send.msg_length = __be32_to_cpu(pdu->send.msg_length);
 	if (unlikely(pdu->send.msg_length > wr->length))
 		return -EMSGSIZE;
 
-	pdu->send.msg_offset = __be32_to_cpu(pdu->send.msg_offset);
 	if (unlikely(pdu->send.msg_offset > pdu->send.msg_length))
 		return -EINVAL;
 
@@ -1942,7 +1913,6 @@ static int ibscif_process_write(struct ibscif_qp *qp, union ibscif_pdu *pdu,
 
 	/* Writes with immediate data consume an rq wqe. */
 	if (ibscif_pdu_is_immed(pdu->hdr.opcode)) {
-		pdu->write.msg_id = __be32_to_cpu(pdu->write.msg_id);
 		spin_lock_bh(&qp->rq.lock);
 		if (unlikely(pdu->write.msg_id >= qp->rq.next_msg_id)) {
 			spin_unlock_bh(&qp->rq.lock);
@@ -1963,12 +1933,12 @@ static int ibscif_process_write(struct ibscif_qp *qp, union ibscif_pdu *pdu,
 
 	skb_pull(skb, sizeof(pdu->write));
 
-	rdma_addr = __be64_to_cpu(pdu->write.rdma_address);
+	rdma_addr = pdu->write.rdma_address;
 	rdma_len  = pdu->hdr.length;
 	if (unlikely((rdma_addr + (rdma_len - 1)) < rdma_addr))
 		return -EOVERFLOW;
 
-	mr = ibscif_validate_mr(__be32_to_cpu(pdu->write.rdma_key),
+	mr = ibscif_validate_mr(pdu->write.rdma_key,
 				rdma_addr, rdma_len, qp->ibqp.pd,
 				IB_ACCESS_REMOTE_WRITE);
 	if (unlikely(IS_ERR(mr)))
@@ -2007,12 +1977,12 @@ static int ibscif_process_read(struct ibscif_qp *qp, union ibscif_pdu *pdu,
 	if (unlikely(!(qp->access & IB_ACCESS_REMOTE_READ)))
 		return -EACCES;
 
-	rdma_addr = __be64_to_cpu(pdu->read_req.rdma_address);
-	rdma_len  = __be32_to_cpu(pdu->read_req.rdma_length);
+	rdma_addr = pdu->read_req.rdma_address;
+	rdma_len  = pdu->read_req.rdma_length;
 	if (unlikely((rdma_addr + (rdma_len - 1)) < rdma_addr))
 		return -EOVERFLOW;
 
-	mr = ibscif_validate_mr(__be32_to_cpu(pdu->read_req.rdma_key),
+	mr = ibscif_validate_mr(pdu->read_req.rdma_key,
 				rdma_addr, rdma_len, qp->ibqp.pd,
 				IB_ACCESS_REMOTE_READ);
 	if (unlikely(IS_ERR(mr)))
@@ -2029,7 +1999,7 @@ static int ibscif_process_read(struct ibscif_qp *qp, union ibscif_pdu *pdu,
 	wr->opcode = WR_RDMA_READ_RSP;
 	wr->state  = WR_WAITING;
 	wr->length = rdma_len;
-	wr->msg_id = __be32_to_cpu(pdu->read_req.rdma_id);
+	wr->msg_id = pdu->read_req.rdma_id;
 	wr->num_ds = 1;
 	wr->ds_list[0].mr     = mr;
 	wr->ds_list[0].offset = rdma_addr - mr->addr;
@@ -2049,15 +2019,13 @@ static int ibscif_process_read_rsp(struct ibscif_qp *qp, union ibscif_pdu *pdu,
 	int err;
 
 	/* Find the requesting sq wr. */
-	wr = ibscif_wr_by_msg_id(&qp->sq, __be32_to_cpu(pdu->read_rsp.rdma_id));
+	wr = ibscif_wr_by_msg_id(&qp->sq, pdu->read_rsp.rdma_id);
 	if (unlikely(!wr))
 		return -EBADR;
 	if (unlikely(wr->opcode != WR_RDMA_READ))
 		return -ENOMSG;
 
 	skb_pull(skb, sizeof(pdu->read_rsp));
-
-	pdu->read_rsp.rdma_offset = __be32_to_cpu(pdu->read_rsp.rdma_offset);
 
 	err = ibscif_place_data(qp, wr, skb, pdu->hdr.length,
 				pdu->read_rsp.rdma_offset, pdu->hdr.seq_num);
@@ -2092,13 +2060,13 @@ static int ibscif_process_atomic_req(struct ibscif_qp *qp,
 
 	opcode = ibscif_pdu_base_type(pdu->hdr.opcode);
 	if (opcode == ibscif_op_comp_swap) {
-		addr = (u64 *)__be64_to_cpu(pdu->comp_swap.atomic_address);
-		rkey = __be32_to_cpu(pdu->comp_swap.atomic_key);
-		msg_id = __be32_to_cpu(pdu->comp_swap.atomic_id);
+		addr = (u64 *)pdu->comp_swap.atomic_address;
+		rkey = pdu->comp_swap.atomic_key;
+		msg_id = pdu->comp_swap.atomic_id;
 	} else {
-		addr = (u64 *)__be64_to_cpu(pdu->fetch_add.atomic_address);
-		rkey = __be32_to_cpu(pdu->fetch_add.atomic_key);
-		msg_id = __be32_to_cpu(pdu->fetch_add.atomic_id);
+		addr = (u64 *)pdu->fetch_add.atomic_address;
+		rkey = pdu->fetch_add.atomic_key;
+		msg_id = pdu->fetch_add.atomic_id;
 	}
 
 	if (unlikely((u64)addr & (sizeof *addr - 1)))
@@ -2128,10 +2096,10 @@ static int ibscif_process_atomic_req(struct ibscif_qp *qp,
 	addr = ibscif_map_src(page) + offset;
 	wr->atomic_rsp.orig_data = *addr;
 	if (opcode == ibscif_op_fetch_add)
-		*addr += __be64_to_cpu(pdu->fetch_add.add_data);
+		*addr += pdu->fetch_add.add_data;
 	else if (wr->atomic_rsp.orig_data ==
-		 __be64_to_cpu(pdu->comp_swap.comp_data))
-		*addr  = __be64_to_cpu(pdu->comp_swap.swap_data);
+		 pdu->comp_swap.comp_data)
+		*addr  = pdu->comp_swap.swap_data;
 	ibscif_unmap_src(page, addr);
 
 	ibscif_put_mr(mr);
@@ -2169,8 +2137,7 @@ static int ibscif_process_atomic_rsp(struct ibscif_qp *qp,
 		return -EINVAL;
 
 	/* Find the requesting sq wr. */
-	wr = ibscif_wr_by_msg_id(&qp->sq,
-				 __be32_to_cpu(pdu->atomic_rsp.atomic_id));
+	wr = ibscif_wr_by_msg_id(&qp->sq, pdu->atomic_rsp.atomic_id);
 	if (unlikely(!wr))
 		return -EBADR;
 
@@ -2183,7 +2150,6 @@ static int ibscif_process_atomic_rsp(struct ibscif_qp *qp,
 	skb_pull(skb, (unsigned long)&pdu->atomic_rsp.orig_data -
 		      (unsigned long)pdu);
 
-	pdu->atomic_rsp.orig_data = __be64_to_cpu(pdu->atomic_rsp.orig_data);
 	err = ibscif_place_data(qp, wr, skb, sizeof pdu->atomic_rsp.orig_data,
 				0, pdu->hdr.seq_num);
 	if (unlikely(err))
@@ -2201,7 +2167,7 @@ static int ibscif_process_disconnect(struct ibscif_qp *qp,
 				     union ibscif_pdu *pdu,
 				     struct sk_buff *skb)
 {
-	ibscif_qp_remote_disconnect(qp, __be32_to_cpu(pdu->disconnect.reason));
+	ibscif_qp_remote_disconnect(qp, pdu->disconnect.reason);
 	return 0;
 }
 
@@ -2231,7 +2197,6 @@ static int ibscif_process_send_rma(struct ibscif_qp *qp,
 		return -EACCES;
 	}
 
-	pdu->send.msg_id = __be32_to_cpu(pdu->send.msg_id);
 	spin_lock_bh(&qp->rq.lock);
 	if (unlikely(pdu->send.msg_id >= qp->rq.next_msg_id)) {
 		spin_unlock_bh(&qp->rq.lock);
@@ -2247,11 +2212,9 @@ static int ibscif_process_send_rma(struct ibscif_qp *qp,
 	if (unlikely(!wr))
 		return -EBADR;
 
-	pdu->send.msg_length = __be32_to_cpu(pdu->send.msg_length);
 	if (unlikely(pdu->send.msg_length > wr->length))
 		return -EMSGSIZE;
 
-	pdu->send.msg_offset = __be32_to_cpu(pdu->send.msg_offset);
 	if (unlikely(pdu->send.msg_offset > pdu->send.msg_length))
 		return -EINVAL;
 
@@ -2260,10 +2223,10 @@ static int ibscif_process_send_rma(struct ibscif_qp *qp,
 
 	total = 0;
 
-	num_rma_addrs = __be32_to_cpu(pdu->send.num_rma_addrs);
+	num_rma_addrs = pdu->send.num_rma_addrs;
 	cur_rma_addr = 0;
-	rma_offset = __be64_to_cpu(pdu->send.rma_addrs[cur_rma_addr].offset);
-	rma_length = __be32_to_cpu(pdu->send.rma_addrs[cur_rma_addr].length);
+	rma_offset = pdu->send.rma_addrs[cur_rma_addr].offset;
+	rma_length = pdu->send.rma_addrs[cur_rma_addr].length;
 
 	ds_offset = pdu->send.msg_offset;
 	ds = wr->ds_list;
@@ -2331,11 +2294,9 @@ static int ibscif_process_send_rma(struct ibscif_qp *qp,
 					return -EMSGSIZE;
 
 				rma_offset =
-					__be64_to_cpu(pdu->send.rma_addrs[
-						cur_rma_addr].offset);
+					pdu->send.rma_addrs[cur_rma_addr].offset;
 				rma_length =
-					__be32_to_cpu(pdu->send.rma_addrs[
-						cur_rma_addr].length);
+					pdu->send.rma_addrs[cur_rma_addr].length;
 			}
 		}
 
@@ -2360,7 +2321,7 @@ static int ibscif_process_send_rma(struct ibscif_qp *qp,
 	wr->opcode = WR_RMA_RSP;
 	wr->state  = WR_WAITING;
 	wr->length = 0;
-	wr->msg_id = __be32_to_cpu(pdu->send.rma_id);
+	wr->msg_id = pdu->send.rma_id;
 	wr->num_ds = 0;
 	wr->rma_rsp.xfer_length = total;
 	wr->rma_rsp.error = err;
@@ -2401,7 +2362,6 @@ static int ibscif_process_write_rma(struct ibscif_qp *qp,
 
 	/* Writes with immediate data consume an rq wqe. */
 	if (ibscif_pdu_is_immed(pdu->hdr.opcode)) {
-		pdu->write.msg_id = __be32_to_cpu(pdu->write.msg_id);
 		spin_lock_bh(&qp->rq.lock);
 		if (unlikely(pdu->write.msg_id >= qp->rq.next_msg_id)) {
 			spin_unlock_bh(&qp->rq.lock);
@@ -2416,12 +2376,12 @@ static int ibscif_process_write_rma(struct ibscif_qp *qp,
 	else
 		wr = NULL;
 
-	rdma_addr = __be64_to_cpu(pdu->write.rdma_address);
-	rdma_len  = __be32_to_cpu(pdu->write.rma_length);
+	rdma_addr = pdu->write.rdma_address;
+	rdma_len  = pdu->write.rma_length;
 	if (unlikely((rdma_addr + (rdma_len - 1)) < rdma_addr))
 		return -EOVERFLOW;
 
-	mr = ibscif_validate_mr(__be32_to_cpu(pdu->write.rdma_key),
+	mr = ibscif_validate_mr(pdu->write.rdma_key,
 				rdma_addr, rdma_len, qp->ibqp.pd,
 				IB_ACCESS_REMOTE_WRITE);
 	if (unlikely(IS_ERR(mr)))
@@ -2433,10 +2393,10 @@ static int ibscif_process_write_rma(struct ibscif_qp *qp,
 
 	total = 0;
 	err = 0;
-	num_rma_addrs = __be32_to_cpu(pdu->write.num_rma_addrs);
+	num_rma_addrs = pdu->write.num_rma_addrs;
 	for (i=0; i<num_rma_addrs; i++) {
-		rma_offset = __be64_to_cpu(pdu->write.rma_addrs[i].offset);
-		rma_length = __be32_to_cpu(pdu->write.rma_addrs[i].length);
+		rma_offset = pdu->write.rma_addrs[i].offset;
+		rma_length = pdu->write.rma_addrs[i].length;
 
 		if (rdma_len < rma_length)
 			rma_length = rdma_len;
@@ -2484,7 +2444,7 @@ static int ibscif_process_write_rma(struct ibscif_qp *qp,
 	wr->opcode = WR_RMA_RSP;
 	wr->state  = WR_WAITING;
 	wr->length = 0;
-	wr->msg_id = __be32_to_cpu(pdu->write.rma_id);
+	wr->msg_id = pdu->write.rma_id;
 	wr->num_ds = 0;
 	wr->rma_rsp.xfer_length = total;
 	wr->rma_rsp.error = err;
@@ -2523,12 +2483,12 @@ static int ibscif_process_read_rma(struct ibscif_qp *qp,
 	if (unlikely(!(qp->access & IB_ACCESS_REMOTE_READ)))
 		return -EACCES;
 
-	rdma_addr = __be64_to_cpu(pdu->read_req.rdma_address);
-	rdma_len  = __be32_to_cpu(pdu->read_req.rdma_length);
+	rdma_addr = pdu->read_req.rdma_address;
+	rdma_len  = pdu->read_req.rdma_length;
 	if (unlikely((rdma_addr + (rdma_len - 1)) < rdma_addr))
 		return -EOVERFLOW;
 
-	mr = ibscif_validate_mr(__be32_to_cpu(pdu->read_req.rdma_key),
+	mr = ibscif_validate_mr(pdu->read_req.rdma_key,
 				rdma_addr, rdma_len, qp->ibqp.pd,
 				IB_ACCESS_REMOTE_READ);
 	if (unlikely(IS_ERR(mr)))
@@ -2540,10 +2500,10 @@ static int ibscif_process_read_rma(struct ibscif_qp *qp,
 
 	total = 0;
 	err = 0;
-	num_rma_addrs = __be32_to_cpu(pdu->read_req.num_rma_addrs);
+	num_rma_addrs = pdu->read_req.num_rma_addrs;
 	for (i=0; i<num_rma_addrs; i++) {
-		rma_offset = __be64_to_cpu(pdu->read_req.rma_addrs[i].offset);
-		rma_length = __be32_to_cpu(pdu->read_req.rma_addrs[i].length);
+		rma_offset = pdu->read_req.rma_addrs[i].offset;
+		rma_length = pdu->read_req.rma_addrs[i].length;
 
 		if (rdma_len < rma_length)
 			rma_length = rdma_len;
@@ -2583,7 +2543,7 @@ static int ibscif_process_read_rma(struct ibscif_qp *qp,
 	wr->opcode = WR_RMA_RSP;
 	wr->state  = WR_WAITING;
 	wr->length = 0;
-	wr->msg_id = __be32_to_cpu(pdu->read_req.rdma_id);
+	wr->msg_id = pdu->read_req.rdma_id;
 	wr->num_ds = 0;
 	wr->rma_rsp.xfer_length = total;
 	wr->rma_rsp.error = err;
@@ -2600,7 +2560,7 @@ static int ibscif_process_rma_rsp(struct ibscif_qp *qp,
 {
 	struct ibscif_wr *wr;
 
-	wr = ibscif_wr_by_msg_id(&qp->sq, __be32_to_cpu(pdu->rma_rsp.rma_id));
+	wr = ibscif_wr_by_msg_id(&qp->sq, pdu->rma_rsp.rma_id);
 	if (unlikely(!wr))
 		return -EBADR;
 	if (unlikely(!wr->use_rma))
@@ -2779,15 +2739,6 @@ static int ibscif_recv_pkt(struct sk_buff *skb, struct ibscif_dev *dev,
 	union ibscif_pdu *pdu = (union ibscif_pdu *)skb->data;
 	struct ibscif_qp *qp = ERR_PTR(-ENOENT);
 
-	/* Convert the base header. */
-	pdu->hdr.opcode	    = __be16_to_cpu(pdu->hdr.opcode);
-	pdu->hdr.length	    = __be16_to_cpu(pdu->hdr.length);
-	pdu->hdr.dst_qp	    = __be32_to_cpu(pdu->hdr.dst_qp);
-	pdu->hdr.src_qp	    = __be32_to_cpu(pdu->hdr.src_qp);
-	pdu->hdr.seq_num    = __be32_to_cpu(pdu->hdr.seq_num);
-	pdu->hdr.sq_ack_num = __be32_to_cpu(pdu->hdr.sq_ack_num);
-	pdu->hdr.iq_ack_num = __be32_to_cpu(pdu->hdr.iq_ack_num);
-
 	if (pdu->hdr.opcode == ibscif_op_close) {
 		conn->remote_close = 1;
 		goto done_no_qp;
@@ -2846,7 +2797,7 @@ void ibscif_do_recv(struct ibscif_dev *dev, scif_epd_t ep,
 		return;
 	}
 
-	skb->protocol  = IBSCIF_PACKET_TYPE;
+	skb->protocol  = __cpu_to_be16(IBSCIF_PACKET_TYPE);
 	skb->ip_summed = CHECKSUM_UNNECESSARY;
 	skb->priority  = TC_PRIO_CONTROL; /* highest defined priority */
 	skb->dev       = (void *) dev;
@@ -2885,8 +2836,8 @@ void ibscif_do_recv(struct ibscif_dev *dev, scif_epd_t ep,
 		recv_buffer += ret;
 	}
 
-	hdr_size = __be16_to_cpu(pdu->hdr.hdr_size);
-	payload_size = __be16_to_cpu(pdu->hdr.length);
+	hdr_size = pdu->hdr.hdr_size;
+	payload_size = pdu->hdr.length;
 	pdu_size = hdr_size + payload_size;
 	if (unlikely(pdu_size > IBSCIF_MTU)) {
 		printk(KERN_ALERT PFX

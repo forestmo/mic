@@ -434,13 +434,13 @@ int ibscif_process_cm_skb(struct sk_buff *skb, struct ibscif_conn *conn)
 	__be16  port;
 	u64 req_ctx, rep_ctx;
 
-	req_ctx	= __be64_to_cpu(pdu->cm.req_ctx);
-	rep_ctx	= __be64_to_cpu(pdu->cm.rep_ctx);
-	cmd	= __be32_to_cpu(pdu->cm.cmd);
+	req_ctx	= pdu->cm.req_ctx;
+	rep_ctx	= pdu->cm.rep_ctx;
+	cmd	= pdu->cm.cmd;
 	port	= pdu->cm.port;
-	qpn	= __be32_to_cpu(pdu->cm.qpn);
-	status	= __be32_to_cpu(pdu->cm.status);
-	plen	= __be32_to_cpu(pdu->cm.plen);
+	qpn	= pdu->cm.qpn;
+	status	= pdu->cm.status;
+	plen	= pdu->cm.plen;
 
 	switch (cmd) {
 	  case IBSCIF_CM_REQ:

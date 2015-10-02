@@ -1,5 +1,5 @@
 config INFINIBAND_SCIF
 	tristate "SCIF RDMA driver support"
-	depends on SCIF
+	depends on 64BIT && X86 && SCIF
 	---help---
 	  RDMA over SCIF driver.

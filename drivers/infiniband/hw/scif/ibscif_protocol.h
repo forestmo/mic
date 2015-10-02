@@ -118,24 +118,24 @@
  * Remote address descriptor for SCIF RMA operations
  */
 struct rma_addr {
-	__be64			offset;
-	__be32			length;
-	__be32			reserved;
+	u64			offset;
+	u32			length;
+	u32			reserved;
 } __attribute__ ((packed));
 
 /*
  * Base header present in every packet
  */
 struct base_hdr {
-	__be16			opcode;
-	__be16			length;
-	__be32			dst_qp;
-	__be32			src_qp;
-	__be32			seq_num;
-	__be32			sq_ack_num;
-	__be32			iq_ack_num;
-	__be16			hdr_size;
-	__be16			reserved[3];
+	u16			opcode;
+	u16			length;
+	u32			dst_qp;
+	u32			src_qp;
+	u32			seq_num;
+	u32			sq_ack_num;
+	u32			iq_ack_num;
+	u16			hdr_size;
+	u16			reserved[3];
 } __attribute__ ((packed));
 
 /*
@@ -143,9 +143,9 @@ struct base_hdr {
  */
 struct ud_hdr {
 	struct base_hdr		hdr;
-	__be32			msg_id;
-	__be32			msg_length;
-	__be32			msg_offset;
+	u32			msg_id;
+	u32			msg_length;
+	u32			msg_offset;
 	u8			grh[40];
 } __attribute__ ((packed));
 
@@ -154,12 +154,12 @@ struct ud_hdr {
  */
 struct send_hdr {
 	struct base_hdr		hdr;
-	__be32			msg_id;
-	__be32			msg_length;
-	__be32			msg_offset;
+	u32			msg_id;
+	u32			msg_length;
+	u32			msg_offset;
 	__be32			immed_data;
-	__be32			rma_id;		/* RMA */
-	__be32			num_rma_addrs;	/* RMA */
+	u32			rma_id;		/* RMA */
+	u32			num_rma_addrs;	/* RMA */
 	struct rma_addr		rma_addrs[0];	/* RMA */
 } __attribute__ ((packed));
 
@@ -168,13 +168,13 @@ struct send_hdr {
  */
 struct write_hdr {
 	struct base_hdr		hdr;
-	__be64			rdma_address;
-	__be32			rdma_key;
+	u64			rdma_address;
+	u32			rdma_key;
 	__be32			immed_data;
-	__be32			msg_id;
-	__be32			rma_length;	/* RMA */
-	__be32			rma_id;		/* RMA */
-	__be32			num_rma_addrs;	/* RMA */
+	u32			msg_id;
+	u32			rma_length;	/* RMA */
+	u32			rma_id;		/* RMA */
+	u32			num_rma_addrs;	/* RMA */
 	struct rma_addr		rma_addrs[0];	/* RMA */
 } __attribute__ ((packed));
 
@@ -183,11 +183,11 @@ struct write_hdr {
  */
 struct read_req_hdr {
 	struct base_hdr		hdr;
-	__be64			rdma_address;
-	__be32			rdma_key;
-	__be32			rdma_length;	/* shared with RMA */
-	__be32			rdma_id;	/* shared with RMA */
-	__be32			num_rma_addrs;	/* RMA */
+	u64			rdma_address;
+	u32			rdma_key;
+	u32			rdma_length;	/* shared with RMA */
+	u32			rdma_id;	/* shared with RMA */
+	u32			num_rma_addrs;	/* RMA */
 	struct rma_addr		rma_addrs[0];	/* RMA */
 } __attribute__ ((packed));
 
@@ -196,8 +196,8 @@ struct read_req_hdr {
  */
 struct read_rsp_hdr {
 	struct base_hdr		hdr;
-	__be32			rdma_offset;
-	__be32			rdma_id;
+	u32			rdma_offset;
+	u32			rdma_id;
 } __attribute__ ((packed));
 
 
@@ -206,11 +206,11 @@ struct read_rsp_hdr {
  */
 struct comp_swap_hdr {
 	struct base_hdr		hdr;
-	__be64			atomic_address;
-	__be64			comp_data;
-	__be64			swap_data;
-	__be32			atomic_key;
-	__be32			atomic_id;
+	u64			atomic_address;
+	u64			comp_data;
+	u64			swap_data;
+	u32			atomic_key;
+	u32			atomic_id;
 	/* no pad needed */
 } __attribute__ ((packed));
 
@@ -220,10 +220,10 @@ struct comp_swap_hdr {
  */
 struct fetch_add_hdr {
 	struct base_hdr		hdr;
-	__be64			atomic_address;
-	__be64			add_data;
-	__be32			atomic_key;
-	__be32			atomic_id;
+	u64			atomic_address;
+	u64			add_data;
+	u32			atomic_key;
+	u32			atomic_id;
 	/* no pad needed */
 } __attribute__ ((packed));
 
@@ -232,8 +232,8 @@ struct fetch_add_hdr {
  */
 struct atomic_rsp_hdr {
 	struct base_hdr		hdr;
-	__be64			orig_data;
-	__be32			atomic_id;
+	u64			orig_data;
+	u32			atomic_id;
 } __attribute__ ((packed));
 
 /*
@@ -248,7 +248,7 @@ struct ack_hdr {
  */
 struct disconnect_hdr {
 	struct base_hdr		hdr;
-	__be32			reason;
+	u32			reason;
 } __attribute__ ((packed));
 
 /*
@@ -256,9 +256,9 @@ struct disconnect_hdr {
  */
 struct rma_rsp_hdr {
 	struct base_hdr		hdr;
-	__be32			rma_id;
-	__be32			xfer_length;
-	__be32			error;
+	u32			rma_id;
+	u32			xfer_length;
+	u32			error;
 } __attribute__ ((packed));
 
 /*
@@ -266,11 +266,11 @@ struct rma_rsp_hdr {
  */
 struct reg_hdr {
 	struct base_hdr		hdr;
-	__be64			scif_offset;
-	__be64			address;
-	__be32			length;
-	__be32			rkey;
-	__be32			access;
+	u64			scif_offset;
+	u64			address;
+	u32			length;
+	u32			rkey;
+	u32			access;
 } __attribute__ ((packed));
 
 /*
@@ -292,14 +292,14 @@ struct close_hdr {
 
 struct cm_hdr {
 	struct base_hdr		hdr;
-	__be64			req_ctx;
-	__be64			rep_ctx;
-	__be32			cmd;
+	u64			req_ctx;
+	u64			rep_ctx;
+	u32			cmd;
 	__be16			port;
-	__be16			padding;
-	__be32			qpn;
-	__be32			status;
-	__be32			plen;
+	u16			padding;
+	u32			qpn;
+	u32			status;
+	u32			plen;
 	u8			pdata[0];
 } __attribute__ ((packed));
 
