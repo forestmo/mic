@@ -30,17 +30,6 @@
 
 #include "ibscif_driver.h"
 
-void ibscif_dump_sg(char *str, struct ib_sge *sge, int num)
-{
-	extern void ibscif_dump(char*, void*, int);
-	if (!sge)
-		return;
-	while (num--) {
-		ibscif_dump(str, (void*)sge->addr, sge->length);
-		sge++;
-	}
-}
-
 /*
  * Build and validate the wr->ds_list from the given sg_list.
  * If successful, a reference is held on each mr in the wr->ds_list.

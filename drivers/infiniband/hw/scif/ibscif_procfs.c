@@ -105,7 +105,7 @@ static int ibscif_stats_open(struct inode *inode, struct file *file)
        return single_open(file, ibscif_stats_show, PDE_DATA(inode));
 }
 
-struct file_operations ibscif_fops = {
+static struct file_operations ibscif_fops = {
        .owner = THIS_MODULE,
        .open = ibscif_stats_open,
        .read = seq_read,

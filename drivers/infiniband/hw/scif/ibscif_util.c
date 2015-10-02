@@ -218,8 +218,8 @@ void ibscif_do_accept(struct ibscif_dev *dev)
 	spin_unlock(&conn_state_lock);
 }
 
-struct ibscif_conn *ibscif_do_connect(struct ibscif_dev *dev,
-				      int remote_node_id)
+static struct ibscif_conn *ibscif_do_connect(struct ibscif_dev *dev,
+					     int remote_node_id)
 {
 	struct scif_port_id dest;
 	struct ibscif_conn *conn = NULL;

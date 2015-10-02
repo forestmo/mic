@@ -465,7 +465,7 @@ static void ibscif_qp_reset(struct ibscif_qp *qp)
 }
 
 /* Caller must provide proper synchronization. */
-void ibscif_qp_idle(struct ibscif_qp *qp)
+static void ibscif_qp_idle(struct ibscif_qp *qp)
 {
 	if (qp->state == QP_IDLE)
 		return;

@@ -62,7 +62,7 @@ static struct sockaddr_in node_id_to_sockaddr_in(int node_id)
 	return addr;
 }
 
-void free_cm(struct kref *kref)
+static void free_cm(struct kref *kref)
 {
 	struct ibscif_cm *cm_ctx;
 	cm_ctx = container_of(kref, struct ibscif_cm, kref);
@@ -81,7 +81,7 @@ static inline void put_cm(struct ibscif_cm *cm_ctx)
         kref_put(&cm_ctx->kref, free_cm);
 }
 
-void free_listen(struct kref *kref)
+static void free_listen(struct kref *kref)
 {
 	struct ibscif_listen *listen;
 	listen = container_of(kref, struct ibscif_listen, kref);

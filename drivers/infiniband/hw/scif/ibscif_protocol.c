@@ -52,7 +52,7 @@ struct ibscif_skb_cb {
 #define SET_PAGE(x,y) __skb_frag_set_page(x, y)
 #define GET_PAGE(x) __skb_frag_ref(x)
 
-void ibscif_skb_destructor(struct sk_buff *skb)
+static void ibscif_skb_destructor(struct sk_buff *skb)
 {
 	struct ibscif_dev *dev = GET_SKB_DEV(skb);
 
@@ -1059,9 +1059,10 @@ void ibscif_send_disconnect(struct ibscif_qp *qp, enum ibscif_reason reason)
 	ibscif_dev_queue_xmit(skb);
 }
 
-void ibscif_reflect_disconnect(struct ibscif_qp *qp, struct base_hdr *hdr,
-			       struct sk_buff *in_skb,
-			       enum ibscif_reason reason)
+static void ibscif_reflect_disconnect(struct ibscif_qp *qp,
+				      struct base_hdr *hdr,
+				      struct sk_buff *in_skb,
+				      enum ibscif_reason reason)
 {
 	struct ibscif_full_frame *pdu;
 	struct sk_buff *skb;

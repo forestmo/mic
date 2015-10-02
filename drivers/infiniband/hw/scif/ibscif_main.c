@@ -93,20 +93,6 @@ DEFINE_IDR(wiremap);
 DEFINE_RWLOCK(wiremap_lock);
 static u32 reserved_0 = 0;
 
-void ibscif_dump(char *str, unsigned char* buf, int len)
-{
-	unsigned char *p, tmp[(16*3)+1];
-	int i;
-	return;
-	len = len > 64 ? 64 : len;
-	while (len) {
-		p = tmp;
-		for (i = len > 16 ? 16 : len; i; i--, len--)
-			p += sprintf(p, "%2x ", *buf++);
-		printk("(%d)%s: %s\n", smp_processor_id(), str, tmp);
-	}
-}
-
 int ibscif_reserve_quota(int *npages)
 {
 	int c, old, err;
