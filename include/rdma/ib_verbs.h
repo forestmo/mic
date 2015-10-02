@@ -412,7 +412,7 @@ union rdma_protocol_stats {
 					| RDMA_CORE_CAP_IW_CM)
 #define RDMA_CORE_PORT_INTEL_OPA       (RDMA_CORE_PORT_IBA_IB  \
 					| RDMA_CORE_CAP_OPA_MAD)
-#define RDMA_CORE_PORT_SCIF            (RDMA_CORE_PORT_SCIF  \
+#define RDMA_CORE_PORT_INTEL_SCIF      (RDMA_CORE_CAP_PROT_SCIF \
 					| RDMA_CORE_CAP_IW_CM)
 
 struct ib_port_attr {
