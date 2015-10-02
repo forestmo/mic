@@ -86,6 +86,17 @@ static int ibscif_query_port(struct ib_device *ibdev, u8 port,
 	return 0;
 }
 
+static int ibscif_get_port_immutable(struct ib_device *ibdev, u8 port,
+				     struct ib_port_immutable *immutable)
+{
+	immutable->pkey_tbl_len = 1;
+	immutable->gid_tbl_len = 1;
+	immutable->core_cap_flags = RDMA_CORE_PORT_INTEL_SCIF;
+	immutable->max_mad_size = 0;
+
+	return 0;
+}
+
 static int ibscif_query_pkey(struct ib_device *ibdev, u8 port, u16 index,
 			     u16 *pkey)
 {
@@ -154,6 +165,7 @@ static int ibscif_register_device(struct ibscif_dev *dev)
 	dev->ibdev.node_type		= new_ib_type ? RDMA_NODE_MIC : RDMA_NODE_RNIC;
 	dev->ibdev.phys_port_cnt	= 1;
 
+	dev->ibdev.get_port_immutable	= ibscif_get_port_immutable;
 	dev->ibdev.query_device		= ibscif_query_device;
 	dev->ibdev.num_comp_vectors     = 1;
 	dev->ibdev.query_port		= ibscif_query_port;
