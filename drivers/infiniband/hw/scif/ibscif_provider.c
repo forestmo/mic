@@ -264,8 +264,8 @@ static void ibscif_remove_one(struct net_device *netdev)
 }
 
 static int node_cnt;
-static uint16_t node_ids[IBSCIF_MAX_DEVICES];
-static uint16_t my_node_id;
+static u16 node_ids[IBSCIF_MAX_DEVICES];
+static u16 my_node_id;
 
 static void ibscif_add_one(struct net_device *netdev)
 {

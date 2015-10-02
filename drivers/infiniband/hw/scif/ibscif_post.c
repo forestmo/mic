@@ -119,7 +119,7 @@ int ibscif_post_send(struct ib_qp *ibqp, struct ib_send_wr *ibwr,
 		wr->rma_id = 0;
 
 		if (ibqp->qp_type == IB_QPT_UD) {
-			uint16_t lid;
+			u16 lid;
 			wr->opcode = WR_UD;
 			lid = be16_to_cpu(to_ah(ibwr->wr.ud.ah)->dlid);
 			wr->ud.remote_node_id = IBSCIF_LID_TO_NODE_ID(lid);
