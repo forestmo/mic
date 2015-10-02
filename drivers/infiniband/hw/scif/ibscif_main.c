@@ -30,7 +30,7 @@
 
 #include "ibscif_driver.h"
 
-static const char ibscif_signon[] = DRV_SIGNON DRV_BUILD;
+static const char ibscif_signon[] = DRV_SIGNON DRV_RELDATE;
 
 MODULE_AUTHOR("Intel Corporation");
 MODULE_LICENSE("Dual BSD/GPL");

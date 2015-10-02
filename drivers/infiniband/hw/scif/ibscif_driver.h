@@ -74,9 +74,9 @@
 #define PFX		DRV_NAME ": "
 #define	IBDEV_PFX	DRV_NAME ""
 #define DRV_DESC	"OpenFabrics IBSCIF Driver"
-#define DRV_VERSION	"0.1"
+#define DRV_VERSION	"0.2"
 #define DRV_SIGNON	DRV_DESC " v" DRV_VERSION
-#define DRV_BUILD	" built " __DATE__ " " __TIME__
+#define DRV_RELDATE	"Oct 1, 2015"
 
 #define UVERBS_ABI_VER	6
 #define VENDOR_ID	0x8086	/* Intel Corporation */
